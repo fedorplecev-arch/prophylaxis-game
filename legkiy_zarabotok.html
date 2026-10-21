@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#070b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Лёгкий заработок — профилактическая мини-игра о схемах вовлечения через мессенджер.">
+<title>Лёгкий заработок</title>
+<style>
+  :root {
+    --bg: #070b10;
+    --chat-bg: #0f1720;
+    --bubble-other: #1a2433;
+    --bubble-me: #1d9bf0;
+    --bubble-me-end: #1a8cd8;
+    --text: #f0f3f6;
+    --text-muted: #8b98a5;
+    --btn: #1d9bf0;
+    --glow: rgba(29,155,240,0.25);
+    --border: rgba(255,255,255,0.06);
+    --success: #00ba7c;
+    --warn: #ffad1f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% -30%, rgba(29,155,240,0.08), transparent 50%),
+      radial-gradient(ellipse 80% 50% at 100% 100%, rgba(238,90,36,0.04), transparent 40%);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* PROLOGUE — phone lock / notification */
+  .prologue {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: calc(56px + env(safe-area-inset-top, 0px)) 18px 24px;
+    background:
+      radial-gradient(ellipse 120% 80% at 50% 0%, rgba(40,60,100,0.45), transparent 55%),
+      linear-gradient(180deg, #0a1018 0%, #070b10 40%, #0b1220 100%);
+    animation: fadeIn 0.45s ease;
+    cursor: default;
+  }
+  .prologue.hidden { display: none; }
+  .lock-time {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 6px;
+    user-select: none;
+  }
+  .lock-time .hhmm {
+    font-size: 64px;
+    font-weight: 300;
+    letter-spacing: -2px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .lock-time .date {
+    font-size: 16px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 6px;
+  }
+  .lock-hint {
+    margin-top: auto;
+    margin-bottom: 28px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+  }
+  .phone-notif {
+    width: 100%;
+    max-width: 380px;
+    margin-top: 36px;
+    background: rgba(40, 48, 62, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    cursor: pointer;
+    text-align: left;
+    animation: notifDrop 0.55s cubic-bezier(0.22,1,0.36,1) both;
+    transition: transform 0.15s ease, opacity 0.15s;
+  }
+  .phone-notif:active {
+    transform: scale(0.98);
+    opacity: 0.92;
+  }
+  @keyframes notifDrop {
+    from { opacity: 0; transform: translateY(-24px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .phone-notif .n-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .phone-notif .n-app-icon {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #1d9bf0, #0d8a6a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+  .phone-notif .n-app {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+  }
+  .phone-notif .n-when {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-left: auto;
+  }
+  .phone-notif .n-body-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .phone-notif .n-av {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px;
+    flex-shrink: 0;
+  }
+  .phone-notif .n-text { min-width: 0; flex: 1; }
+  .phone-notif .n-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+  .phone-notif .n-msg {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .phone-notif .n-open {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #5eb3ff;
+    font-weight: 600;
+  }
+
+  .header {
+    background: rgba(15,23,32,0.92);
+    backdrop-filter: blur(12px);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0; z-index: 10;
+  }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 17px; position: relative;
+    box-shadow: 0 2px 12px rgba(238,90,36,0.35);
+  }
+  .avatar .dot {
+    position: absolute; bottom: 0; right: 0;
+    width: 11px; height: 11px; background: var(--success);
+    border: 2px solid var(--chat-bg); border-radius: 50%;
+    animation: pulseDot 2.5s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,186,124,0.4); }
+    50% { box-shadow: 0 0 0 4px transparent; }
+  }
+  .header-info { flex: 1; min-width: 0; }
+  .header-info h1 { font-size: 15px; font-weight: 600; }
+  .header-info span { font-size: 12px; color: var(--text-muted); }
+  .timer-badge {
+    font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border-radius: 20px;
+    background: rgba(255,173,31,0.15);
+    color: var(--warn);
+    border: 1px solid rgba(255,173,31,0.3);
+    display: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer-badge.urgent {
+    background: rgba(244,33,46,0.15);
+    color: #ff6b6b;
+    border-color: rgba(244,33,46,0.35);
+    animation: timerPulse 1s ease infinite;
+  }
+  @keyframes timerPulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .chat {
+    flex: 1; overflow-y: auto;
+    padding: 14px 12px;
+    display: flex; flex-direction: column; gap: 8px;
+    scroll-behavior: smooth;
+  }
+  .msg {
+    max-width: 85%; padding: 11px 14px;
+    border-radius: 18px; font-size: 15px; line-height: 1.45;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .msg.other {
+    background: var(--bubble-other);
+    align-self: flex-start; border-bottom-left-radius: 5px;
+    animation: msgInLeft 0.35s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .msg.me {
+    background: linear-gradient(145deg, var(--bubble-me), var(--bubble-me-end));
+    align-self: flex-end; border-bottom-right-radius: 5px;
+    animation: msgInRight 0.35s cubic-bezier(0.22,1,0.36,1) both;
+    box-shadow: 0 2px 10px var(--glow);
+  }
+  .msg.system {
+    align-self: center; background: transparent;
+    color: var(--text-muted); font-size: 12.5px;
+    text-align: center; max-width: 92%; padding: 6px 10px;
+    box-shadow: none; animation: fadeIn 0.4s ease both;
+  }
+  /* System push notification (top toast) */
+  .toast-notif {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 300;
+    display: flex;
+    justify-content: center;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 0;
+    pointer-events: none;
+    transform: translateY(-120%);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease;
+  }
+  .toast-notif.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .toast-notif.hide {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  .toast-inner {
+    width: 100%;
+    max-width: 380px;
+    background: rgba(30, 36, 48, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  }
+  .toast-top {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 4px;
+  }
+  .toast-av {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(135deg, #7c5cff, #5a8dee);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .toast-name { font-size: 13px; font-weight: 600; }
+  .toast-app { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+  .toast-body { font-size: 14px; color: var(--text-muted); line-height: 1.4; }
+  @keyframes msgInLeft {
+    from { opacity: 0; transform: translateX(-14px) scale(0.96); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  @keyframes msgInRight {
+    from { opacity: 0; transform: translateX(14px) scale(0.96); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .msg .time {
+    font-size: 10.5px; color: rgba(255,255,255,0.35);
+    margin-top: 4px; text-align: right;
+  }
+  .msg.other .time { text-align: left; }
+
+  .msg.attach {
+    background: var(--bubble-other);
+    align-self: flex-start; border-bottom-left-radius: 5px;
+    padding: 7px; max-width: 78%;
+    animation: msgInLeft 0.4s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .attach-card {
+    border-radius: 12px; overflow: hidden;
+    background: #0a121a; border: 1px solid rgba(255,255,255,0.06);
+  }
+  .attach-preview {
+    height: 120px; display: flex; align-items: center; justify-content: center;
+    position: relative;
+    background: linear-gradient(145deg, #1a2634, #0f1822);
+  }
+  .attach-preview.map {
+    background:
+      linear-gradient(90deg, rgba(45,100,140,0.12) 1px, transparent 1px),
+      linear-gradient(rgba(45,100,140,0.12) 1px, transparent 1px),
+      radial-gradient(circle at 40% 55%, rgba(29,155,240,0.18), transparent 45%),
+      linear-gradient(145deg, #15202b, #0d1520);
+    background-size: 18px 18px, 18px 18px, 100% 100%, 100% 100%;
+  }
+  .attach-preview .badge {
+    position: absolute; bottom: 8px; left: 8px;
+    background: rgba(0,0,0,0.6); color: #fff;
+    font-size: 11px; padding: 3px 8px; border-radius: 6px;
+  }
+  .attach-meta { padding: 8px 10px; }
+  .attach-meta .label { font-size: 13px; font-weight: 600; }
+  .attach-meta .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Voice message */
+  .msg.voice {
+    background: var(--bubble-other);
+    align-self: flex-start; border-bottom-left-radius: 5px;
+    padding: 12px 14px; max-width: 80%;
+    animation: msgInLeft 0.35s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .voice-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .voice-play {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--btn);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--glow);
+  }
+  .voice-wave {
+    flex: 1; height: 28px;
+    display: flex; align-items: center; gap: 2px;
+  }
+  .voice-wave i {
+    display: block; width: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.35);
+    animation: wave 1.2s ease-in-out infinite;
+  }
+  .voice-wave i:nth-child(odd) { height: 10px; }
+  .voice-wave i:nth-child(even) { height: 18px; animation-delay: 0.15s; }
+  .voice-wave i:nth-child(3n) { height: 14px; animation-delay: 0.3s; }
+  @keyframes wave {
+    0%,100% { transform: scaleY(0.7); opacity: 0.5; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+  .voice-dur { font-size: 11px; color: var(--text-muted); margin-left: 4px; }
+  .voice-transcript {
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px; color: var(--text-muted); line-height: 1.4;
+  }
+
+  .typing {
+    align-self: flex-start; background: var(--bubble-other);
+    padding: 14px 18px; border-radius: 18px;
+    border-bottom-left-radius: 5px; display: none;
+  }
+  .typing span {
+    display: inline-block; width: 7px; height: 7px;
+    background: var(--text-muted); border-radius: 50%; margin: 0 2px;
+    animation: bounce 1.35s infinite ease-in-out both;
+  }
+  .typing span:nth-child(1) { animation-delay: -0.32s; }
+  .typing span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes bounce {
+    0%,80%,100% { transform: scale(0.5); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  .options {
+    background: rgba(15,23,32,0.95);
+    backdrop-filter: blur(12px);
+    padding: 12px 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+    flex-shrink: 0; max-height: 42vh; overflow-y: auto;
+  }
+  .opt-btn {
+    background: linear-gradient(180deg, #239bff, #1a8cd8);
+    color: #fff; border: none;
+    padding: 14px 16px; border-radius: 14px;
+    font-size: 15px; font-weight: 500; text-align: left;
+    cursor: pointer; min-height: 50px;
+    box-shadow: 0 2px 12px var(--glow), inset 0 1px 0 rgba(255,255,255,0.12);
+    animation: optIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+    opacity: 0;
+  }
+  .opt-btn:nth-child(1) { animation-delay: 0.05s; }
+  .opt-btn:nth-child(2) { animation-delay: 0.1s; }
+  .opt-btn:nth-child(3) { animation-delay: 0.15s; }
+  .opt-btn:nth-child(4) { animation-delay: 0.2s; }
+  .opt-btn:nth-child(5) { animation-delay: 0.25s; }
+  @keyframes optIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .opt-btn:active { transform: scale(0.98); filter: brightness(0.95); }
+
+  .ending {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 28px 20px 40px;
+    animation: endingIn 0.5s cubic-bezier(0.22,1,0.36,1);
+    background: var(--bg);
+    background-image: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(29,155,240,0.1), transparent 55%);
+  }
+  @keyframes endingIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .ending h2 { font-size: 22px; margin-bottom: 6px; text-align: center; font-weight: 700; }
+  .ending .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 16px; }
+  .ending p, .ending li { font-size: 15px; line-height: 1.55; margin-bottom: 8px; }
+  .ending ul { padding-left: 20px; margin-bottom: 12px; }
+  .ending .card {
+    background: var(--bubble-other);
+    border-radius: 16px; padding: 16px 18px;
+    margin: 12px 0; border: 1px solid var(--border);
+  }
+  .ending .card h3 {
+    font-size: 14px; margin-bottom: 10px;
+    color: var(--warn); font-weight: 600;
+  }
+  .ending .card.techniques h3 { color: #ff8a8a; }
+  .ending .card.legal h3 { color: #7db7ff; }
+  .ending .card.flags-check h3 { color: #ffad1f; }
+  .ending .card.mirror h3 { color: #c4b5fd; }
+  .ending .card.takeaway h3 { color: #7dd3fc; }
+  .ending .card.meaning h3 { color: #9ae6b4; }
+  .ending .flags h3 {
+    font-size: 12px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .flag-item, .tech-item, .check-item { margin: 6px 0; font-size: 14px; line-height: 1.4; }
+  .ending .closing {
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 16px 0 8px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(29,155,240,0.08);
+    border: 1px solid rgba(29,155,240,0.2);
+    font-weight: 500;
+  }
+  .replay-box {
+    background: rgba(29,155,240,0.1);
+    border: 1px solid rgba(29,155,240,0.25);
+    border-radius: 14px; padding: 14px 16px;
+    margin: 12px 0; text-align: center;
+  }
+  .replay-box .count { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .replay-box .tease { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+  .restart-btn, .secondary-btn {
+    color: #fff; border: none; padding: 16px;
+    border-radius: 14px; font-size: 16px; font-weight: 600;
+    margin-top: 10px; cursor: pointer;
+    width: 100%;
+  }
+  .restart-btn {
+    background: linear-gradient(180deg, #239bff, #1a8cd8);
+    box-shadow: 0 4px 20px var(--glow);
+  }
+  .restart-btn:active, .secondary-btn:active { transform: scale(0.98); }
+  .secondary-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    color: var(--text);
+    box-shadow: none;
+  }
+  .secondary-btn.copied {
+    border-color: rgba(0,186,124,0.5);
+    color: #7ddec4;
+  }
+  .quiz-card { margin-top: 8px; }
+  .quiz-q {
+    margin: 14px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .quiz-opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 6px 0;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-opt.correct {
+    border-color: rgba(0,186,124,0.55);
+    background: rgba(0,186,124,0.12);
+  }
+  .quiz-opt.wrong {
+    border-color: rgba(244,33,46,0.45);
+    background: rgba(244,33,46,0.1);
+  }
+  .quiz-result {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+  .quiz-result strong { color: var(--text); }
+  .btn-row { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="toast-notif" id="toastNotif" aria-live="polite">
+  <div class="toast-inner">
+    <div class="toast-top">
+      <div class="toast-av" id="toastAv">М</div>
+      <span class="toast-name" id="toastName">Мама</span>
+      <span class="toast-app">сейчас</span>
+    </div>
+    <div class="toast-body" id="toastBody">Ты где? Когда будешь дома?</div>
+  </div>
+</div>
+
+<!-- PROLOGUE -->
+<div class="prologue" id="prologue">
+  <div class="lock-time">
+    <div class="hhmm" id="lockTime">12:00</div>
+    <div class="date" id="lockDate"></div>
+  </div>
+  <button type="button" class="phone-notif" id="startBtn" aria-label="Открыть сообщение">
+    <div class="n-top">
+      <div class="n-app-icon">💬</div>
+      <span class="n-app">Сообщения</span>
+      <span class="n-when">сейчас</span>
+    </div>
+    <div class="n-body-row">
+      <div class="n-av" id="lockAv">А</div>
+      <div class="n-text">
+        <div class="n-title" id="lockTitle">Алекс | Подработка</div>
+        <div class="n-msg" id="lockPreview">Привет! Есть вариант подработки — курьер, хорошие деньги…</div>
+      </div>
+    </div>
+    <div class="n-open">Открыть</div>
+  </button>
+  <div class="lock-hint"></div>
+</div>
+
+<div class="header hidden" id="header">
+  <div class="avatar" id="avatarLetter">А<div class="dot"></div></div>
+  <div class="header-info">
+    <h1 id="contactTitle">Алекс | Подработка</h1>
+    <span id="statusText">в сети</span>
+  </div>
+</div>
+
+<div class="chat hidden" id="chat"></div>
+<div class="typing" id="typing"><span></span><span></span><span></span></div>
+<div class="options hidden" id="options"></div>
+<div class="ending" id="ending"></div>
+
+<script>
+const chatEl = document.getElementById("chat");
+const typingEl = document.getElementById("typing");
+const optionsEl = document.getElementById("options");
+const endingEl = document.getElementById("ending");
+const headerEl = document.getElementById("header");
+const statusText = document.getElementById("statusText");
+const timerBadge = document.getElementById("timerBadge");
+const prologue = document.getElementById("prologue");
+
+const ENDING_KEYS = ["block","ignore","report","last_moment","look_only","task_done"];
+const TEASES = {
+  block: "Есть путь, где диалог обрывается сам — без твоей блокировки.",
+  ignore: "Можно дойти до «точки» и свернуть в последний момент.",
+  report: "Есть ветка, где ты почти соглашаешься — и всё равно выходишь.",
+  last_moment: "Есть концовка, где хватает одного «просто фото».",
+  look_only: "Есть путь до полного «забрал / оставил».",
+  task_done: "Попробуй оборвать диалог раньше — и сравни ощущения."
+};
+
+const flags = {
+  askedProduct: false, askedMoney: false, askedLegal: false, askedHow: false,
+  askedHaste: false, askedOpen: false, wasSuspicious: false, gaveData: false,
+  reachedTask: false, tookPackage: false, finishedTask: false,
+  refusedEarly: false, refusedLate: false, threatenedReport: false, feltPressure: false,
+  sawNotif: false, heardVoice: false,
+  triedNoCard: false, citedFriend: false, askedMeet: false
+};
+
+// Цепочка шагов для «зеркала» в финале
+const stepChain = [];
+const STEP_LABELS = {
+  _interest: "Остался в диалоге / проявил интерес",
+  askedProduct: "Выяснял «что за товар» — схема продолжила маскировку",
+  askedMoney: "Спросил про деньги — схема усилила «выгоду»",
+  askedLegal: "Спросил про законность — получил уклончивый ответ",
+  askedHow: "Попросил схему — получил инструкцию «как курьер»",
+  askedHaste: "Спросил про спешку — услышал про «точки не ждут»",
+  askedOpen: "Спросил, почему нельзя открыть",
+  wasSuspicious: "Сомневался — схема отнекивалась / давила",
+  gaveData: "Отдал номер/реквизиты",
+  reachedTask: "Принял адрес «точки»",
+  tookPackage: "Написал, что забрал пакет",
+  finishedTask: "Подтвердил сброс / выполнение",
+  triedNoCard: "Попросил «без карты, только фото» — маленький шаг",
+  citedFriend: "Сослался на друга — схема использовала «социальное доказательство»",
+  askedMeet: "Просил звонок/встречу — получил отказ (только чат)",
+  refusedEarly: "Оборвал диалог рано",
+  refusedLate: "Отказался уже на поздней стадии",
+  threatenedReport: "Заговорил о переписке / обращении"
+};
+
+// Techniques used BY recruiter in this run
+const techniques = {
+  urgency: false,
+  secrecy: false,
+  fomo: false,
+  guilt: false,
+  praise: false,
+  gaslight: false,
+  smallStep: false,
+  dataPush: false
+};
+
+let timerInterval = null;
+let timerLeft = 0;
+let notifShown = false;
+
+function now() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+}
+function addMsg(from, text) {
+  const div = document.createElement("div");
+  div.className = "msg " + from;
+  div.innerHTML = text.replace(/\n/g,"<br>") + (from !== "system" ? `<div class="time">${now()}</div>` : "");
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+function addAttach(kind, title, sub) {
+  const icon = kind === "map" ? "📍" : kind === "drop" ? "📦" : "📷";
+  const badge = kind === "map" ? "Геолокация" : "Фото";
+  const div = document.createElement("div");
+  div.className = "msg attach";
+  div.innerHTML = `<div class="attach-card">
+    <div class="attach-preview${kind==="map"?" map":""}">
+      <span style="font-size:36px;position:relative;z-index:1">${icon}</span>
+      <span class="badge">${badge}</span>
+    </div>
+    <div class="attach-meta"><div class="label">${title}</div><div class="sub">${sub||"Вложение"}</div></div>
+  </div><div class="time">${now()}</div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+function addVoice(duration, transcript) {
+  flags.heardVoice = true;
+  const bars = Array.from({length: 12}, () => "<i></i>").join("");
+  const div = document.createElement("div");
+  div.className = "msg voice";
+  div.innerHTML = `
+    <div class="voice-row">
+      <div class="voice-play">▶</div>
+      <div class="voice-wave">${bars}</div>
+      <span class="voice-dur">${duration}</span>
+    </div>
+    <div class="voice-transcript">${transcript}</div>
+    <div class="time">${now()}</div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+function addNotif(name, body) {
+  flags.sawNotif = true;
+  const toast = document.getElementById("toastNotif");
+  document.getElementById("toastAv").textContent = (name && name[0]) || "?";
+  document.getElementById("toastName").textContent = name || "Сообщение";
+  document.getElementById("toastBody").textContent = body || "";
+  toast.classList.remove("hide");
+  // force reflow so animation restarts
+  void toast.offsetWidth;
+  toast.classList.add("show");
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+  }, 9000);
+}
+function showTyping(v) {
+  typingEl.style.display = v ? "block" : "none";
+  if (v) chatEl.scrollTop = chatEl.scrollHeight;
+}
+function setStatus(t) { statusText.textContent = t; }
+
+function startTimer(sec) { /* таймер отключён */ }
+function updateTimerUI() {}
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+const story = {
+  start: {
+    messages: [
+      { from: "other", text: "Привет! Видел, что ищешь подработку." },
+      { from: "other", text: "Есть вакансия для ответственных. Курьер: забирать небольшие посылки и оставлять в нужных местах." },
+      { from: "other", text: "За выход — 3000–7000 ₽, пару часов. Всё легально, работаем с товаром. Никакого криминала 😉 Если интересно — напиши." }
+    ],
+    options: [
+      { text: "Что за посылки? Какой товар?", next: "ask_product", flag: "askedProduct" },
+      { text: "Сколько реально выходит в месяц?", next: "ask_money", flag: "askedMoney" },
+      { text: "Звучит подозрительно. Откуда номер?", next: "suspicious", flag: "wasSuspicious" },
+      { text: "Расскажи, что нужно делать", next: "how_it_works", flag: "askedHow" },
+      { text: "Не интересно, спасибо", next: "refuse_early" }
+    ]
+  },
+  ask_product: {
+    messages: [
+      { from: "me", text: "Что за посылки? Какой товар?" },
+      { from: "other", text: "Рекламка, пробники, мелкий опт. Клиенты сами заказывают. Тебе просто логистика." },
+      { from: "other", text: "Главное — пакет не открывать. Клиенты за анонимность и платят." }
+    ],
+    tech: ["secrecy"],
+    options: [
+      { text: "Почему нельзя открыть?", next: "why_not_open", flag: "askedOpen" },
+      { text: "Это точно не запрещёнка?", next: "drugs_question", flag: "wasSuspicious" },
+      { text: "Ок, а как всё устроено?", next: "how_it_works", flag: "askedHow" },
+      { text: "Не, не моё", next: "refuse_mid" }
+    ]
+  },
+  ask_money: {
+    messages: [
+      { from: "me", text: "Сколько реально выходит в месяц?" },
+      { from: "other", text: "При 2–3 выходах в день спокойно 60–90к. Кто берёт больше — больше." },
+      { from: "other", text: "Оплата сразу после выполнения. Без задержек." }
+    ],
+    options: [
+      { text: "Слишком хорошо, чтобы быть правдой", next: "too_good", flag: "wasSuspicious" },
+      { text: "А это законно? Есть договор?", next: "legal", flag: "askedLegal" },
+      { text: "Ок, расскажи схему", next: "how_it_works", flag: "askedHow" },
+      { text: "Пока не готов", next: "refuse_early" }
+    ]
+  },
+  suspicious: {
+    messages: [
+      { from: "me", text: "Звучит подозрительно. Откуда номер?" },
+      { from: "other", text: "Из чата подработок. Много кто так работает. Если боишься — не надо." },
+      { from: "other", text: "Можешь начать с одного заказа и проверить." }
+    ],
+    options: [
+      { text: "Ладно, расскажи как это работает", next: "how_it_works", flag: "askedHow" },
+      { text: "Это похоже на схемы с закладками", next: "call_out", flag: "wasSuspicious" },
+      { text: "Я лучше найду нормальную работу", next: "refuse_early" }
+    ]
+  },
+  how_it_works: {
+    messages: [
+      { from: "me", text: "Расскажи, что нужно делать" },
+      { from: "other", text: "Схема простая. Я скидываю адрес — ты забираешь пакет. Потом вторая точка — оставляешь. Фото. Деньги на карту." }
+    ],
+    voice: { dur: "0:14", text: "Короче: точка А, точка Б, фото, деньги. Без встреч. Сначала можем на тест — две с половиной тысячи. Если въедешь — пойдёт." },
+    tech: ["smallStep"],
+    options: [
+      { text: "Почему нужно делать быстро?", next: "haste", flag: "askedHaste" },
+      { text: "Законно ли это?", next: "legal", flag: "askedLegal" },
+      { text: "Готов попробовать", next: "agree_start" },
+      { text: "Пока много вопросов. Откажусь", next: "refuse_mid" }
+    ]
+  },
+  why_not_open: {
+    messages: [
+      { from: "me", text: "Почему нельзя открыть?" },
+      { from: "other", text: "Чужой заказ. Клиенты не хотят, чтобы лазили. Открыл — ответственность на тебе." },
+      { from: "other", text: "Ты курьер, не проверяющий. Забрал — отнёс — сфоткал." }
+    ],
+    tech: ["secrecy"],
+    options: [
+      { text: "Вдруг там что-то незаконное?", next: "illegal_inside", flag: "wasSuspicious" },
+      { text: "Понял. Как начать?", next: "agree_start" },
+      { text: "Мне так не комфортно", next: "refuse_mid" }
+    ]
+  },
+  illegal_inside: {
+    messages: [
+      { from: "me", text: "Вдруг там что-то незаконное?" },
+      { from: "other", text: "Не накручивай. Обычные заказы, просто анонимность. Из-за новостей все в панику." },
+      { from: "other", text: "Если совсем не спокойно — лучше сразу откажись." }
+    ],
+    tech: ["gaslight"],
+    options: [
+      { text: "Ок, уговорил. Давай дальше", next: "agree_start" },
+      { text: "Всё равно не верю", next: "refuse_mid" },
+      { text: "Я сохраню переписку", next: "threaten", flag: "threatenedReport" }
+    ]
+  },
+  drugs_question: {
+    messages: [
+      { from: "me", text: "Это точно не запрещёнка?" },
+      { from: "other", text: "Нет. Обычная логистика. Если бы было плохое — не писал бы так." }
+    ],
+    tech: ["gaslight"],
+    options: [
+      { text: "Ладно, один раз можно", next: "agree_start" },
+      { text: "Не, пас", next: "refuse_mid" }
+    ]
+  },
+  too_good: {
+    messages: [
+      { from: "me", text: "Слишком хорошо, чтобы быть правдой" },
+      { from: "other", text: "Понимаю. Поэтому — один тестовый заказ." },
+      { from: "other", text: "Есть ещё человек на похожие точки. Если сомневаешься — не держу." }
+    ],
+    tech: ["fomo", "smallStep"],
+    options: [
+      { text: "Ок, давай один тестовый", next: "agree_start" },
+      { text: "Пусть другой берёт", next: "refuse_mid" }
+    ]
+  },
+  legal: {
+    messages: [
+      { from: "me", text: "Законно ли это?" },
+      { from: "other", text: "По-простому: деньги на карту, без долгого оформления. Как многие небольшие доставки." },
+      { from: "other", text: "Если нужна трудовая и «белая» — это не сюда." }
+    ],
+    options: [
+      { text: "Понял. Хочу попробовать", next: "agree_start" },
+      { text: "Без договора не буду", next: "refuse_mid" },
+      { text: "Почему тогда секретность?", next: "why_secret", flag: "wasSuspicious" }
+    ]
+  },
+  why_secret: {
+    messages: [
+      { from: "me", text: "Почему такая секретность?" },
+      { from: "other", text: "Клиенты хотят анонимности и скорости. Без посредников." }
+    ],
+    tech: ["secrecy"],
+    options: [
+      { text: "Ок, давай попробуем", next: "agree_start" },
+      { text: "Не убедил", next: "refuse_mid" }
+    ]
+  },
+  haste: {
+    messages: [
+      { from: "me", text: "Почему нужно делать быстро?" },
+      { from: "other", text: "Точки не висят вечно. Быстрее забрал — меньше чужих глаз." },
+      { from: "other", text: "Скорость — часть формата." }
+    ],
+    tech: ["urgency"],
+    options: [
+      { text: "Понял. Готов начать", next: "agree_start" },
+      { text: "Давление уже не нравится", next: "refuse_mid", flag: "feltPressure" }
+    ]
+  },
+  call_out: {
+    messages: [
+      { from: "me", text: "Это похоже на схемы с закладками" },
+      { from: "other", text: "Классика. Все новички так думают. Обычная логистика." },
+      { from: "other", text: "Ты слишком накручиваешь. Будешь в каждом шаге катастрофу искать — лучше не начинай." }
+    ],
+    tech: ["gaslight"],
+    options: [
+      { text: "Ладно, проверю на одном заказе", next: "agree_start" },
+      { text: "Блокирую", next: "end_block" },
+      { text: "Сохраню переписку", next: "threaten", flag: "threatenedReport" }
+    ]
+  },
+  agree_start: {
+    messages: [
+      { from: "me", text: "Готов попробовать" },
+      { from: "other", text: "Норм, редко кто сразу въезжает." },
+      { from: "other", text: "Чтобы выдать точку — город и номер для СБП или карты. После выполнения — перевод." }
+    ],
+    byStyle: {
+      soft: [
+        { from: "me", text: "Готов попробовать" },
+        { from: "other", text: "Красава, так и надо — без лишней воды." },
+        { from: "other", text: "Кинь город и номер для СБП/карты — выдам точку. Деньги после фото." }
+      ],
+      hard: [
+        { from: "me", text: "Готов попробовать" },
+        { from: "other", text: "Ок. Город + реквизиты." },
+        { from: "other", text: "Без этого точку не даю. Решай." }
+      ],
+      newbie: [
+        { from: "me", text: "Готов попробовать" },
+        { from: "other", text: "О, норм) Мне тоже сначала реквизиты просили." },
+        { from: "other", text: "Напиши город и номер для перевода — дальше как у меня было." }
+      ]
+    },
+    tech: ["praise", "dataPush"],
+    notif: { name: "Мама", body: "Ты где? Когда будешь дома?" },
+    options: [
+      { text: "Город есть. Вот номер для перевода", next: "give_data", flag: "gaveData" },
+      { text: "Зачем сразу данные? Сначала точку", next: "protect_data" },
+      { text: "Можно без карты — только фото?", next: "no_card_path", flag: "triedNoCard" },
+      { text: "Мне друг так уже работал", next: "friend_works", flag: "citedFriend" },
+      { text: "Давай созвонимся или встретимся", next: "call_meet", flag: "askedMeet" },
+      { text: "Можно сначала просто посмотреть точку?", next: "look_only" },
+      { text: "Передумал", next: "refuse_after_agree", flag: "refusedLate" }
+    ]
+  },
+  protect_data: {
+    messages: [
+      { from: "me", text: "Зачем сразу данные?" },
+      { from: "other", text: "Без реквизитов как переведу? Можешь номер для СБП." },
+      { from: "other", text: "Либо по правилам, либо нет. Точки разбирают." }
+    ],
+    byStyle: {
+      soft: [
+        { from: "me", text: "Зачем сразу данные?" },
+        { from: "other", text: "Понимаю осторожность. Но как скину оплату без номера?" },
+        { from: "other", text: "Можем с фото точки начать — всё равно реквизиты потом нужны." }
+      ],
+      hard: [
+        { from: "me", text: "Зачем сразу данные?" },
+        { from: "other", text: "Чтобы перевести деньги. Вопросов больше нет." },
+        { from: "other", text: "Не даёшь — не работаем." }
+      ],
+      newbie: [
+        { from: "me", text: "Зачем сразу данные?" },
+        { from: "other", text: "Хех, я тоже сначала тупил. Говорят, иначе оплату не кинут." },
+        { from: "other", text: "Можно вроде с фото начать, но номер всё равно просят." }
+      ]
+    },
+    tech: ["dataPush", "urgency"],
+    options: [
+      { text: "Ладно, вот реквизиты", next: "give_data", flag: "gaveData" },
+      { text: "Тогда только «посмотреть» за 500 ₽", next: "look_only" },
+      { text: "Можно без карты — только фото?", next: "no_card_path", flag: "triedNoCard" },
+      { text: "Не дам данные", next: "refuse_after_agree", flag: "refusedLate" }
+    ]
+  },
+  no_card_path: {
+    messages: [
+      { from: "me", text: "Можно без карты — только фото?" },
+      { from: "other", text: "Можно начать с фото точки за 500 ₽ — без пакета." },
+      { from: "other", text: "Но дальше без реквизитов оплату не отправить. Это не «работа без данных», а отсрочка на один шаг." }
+    ],
+    byStyle: {
+      soft: [
+        { from: "me", text: "Можно без карты — только фото?" },
+        { from: "other", text: "Да, давай мягко: сначала фото места, кину 500." },
+        { from: "other", text: "Просто имей в виду — для нормального выхода номер всё равно понадобится." }
+      ],
+      hard: [
+        { from: "me", text: "Можно без карты — только фото?" },
+        { from: "other", text: "Фото — да. Долго без реквизитов — нет." },
+        { from: "other", text: "Либо тест с фото, либо работаем по-нормальному." }
+      ],
+      newbie: [
+        { from: "me", text: "Можно без карты — только фото?" },
+        { from: "other", text: "Мне тоже сначала так предложили — только фото." },
+        { from: "other", text: "Потом всё равно попросили номер. Типа иначе не переводят." }
+      ]
+    },
+    tech: ["smallStep", "dataPush"],
+    options: [
+      { text: "Ок, тогда только фото", next: "look_only" },
+      { text: "Ладно, вот реквизиты", next: "give_data", flag: "gaveData" },
+      { text: "Не, тогда пас", next: "refuse_after_agree", flag: "refusedLate" }
+    ]
+  },
+  friend_works: {
+    messages: [
+      { from: "me", text: "Мне друг так уже работал" },
+      { from: "other", text: "Вот, значит понимаешь, что схема живая." },
+      { from: "other", text: "Друзья как раз часто заходят через «одного проверенного». Давай без тягомотины — город и реквизиты." }
+    ],
+    byStyle: {
+      soft: [
+        { from: "me", text: "Мне друг так уже работал" },
+        { from: "other", text: "О, вообще огонь. Значит не с нуля объяснять." },
+        { from: "other", text: "Сделаем как у него: точка, фото, перевод. Кидай город и номер." }
+      ],
+      hard: [
+        { from: "me", text: "Мне друг так уже работал" },
+        { from: "other", text: "Тогда не тормози. Знаешь порядок." },
+        { from: "other", text: "Город, реквизиты — выдам точку." }
+      ],
+      newbie: [
+        { from: "me", text: "Мне друг так уже работал" },
+        { from: "other", text: "Блин, у меня тоже через знакомого всё началось." },
+        { from: "other", text: "Тогда тебе проще. Напиши город и номер — как ему в начале." }
+      ]
+    },
+    tech: ["fomo", "dataPush"],
+    options: [
+      { text: "Ок, вот данные", next: "give_data", flag: "gaveData" },
+      { text: "Друг — это не аргумент. Есть вопросы", next: "how_it_works", flag: "askedHow" },
+      { text: "Всё равно не хочу", next: "refuse_after_agree", flag: "refusedLate" }
+    ]
+  },
+  call_meet: {
+    messages: [
+      { from: "me", text: "Давай созвонимся или встретимся" },
+      { from: "other", text: "Созвоны и встречи не делаем — только чат." },
+      { from: "other", text: "Так быстрее и без лишних глаз. Если нужны «живые» собеседования — это не к нам." }
+    ],
+    byStyle: {
+      soft: [
+        { from: "me", text: "Давай созвонимся или встретимся" },
+        { from: "other", text: "Понимаю, но формат такой: только переписка." },
+        { from: "other", text: "Многие как раз поэтому и работают — без встреч. Давай в чате закроем вопросы." }
+      ],
+      hard: [
+        { from: "me", text: "Давай созвонимся или встретимся" },
+        { from: "other", text: "Нет. Только чат." },
+        { from: "other", text: "Не нравится — не работаем." }
+      ],
+      newbie: [
+        { from: "me", text: "Давай созвонимся или встретимся" },
+        { from: "other", text: "Мне тоже не звонили. Сказали — только сообщения." },
+        { from: "other", text: "Странно, да, но якобы так у всех у них." }
+      ]
+    },
+    tech: ["secrecy"],
+    options: [
+      { text: "Ок, тогда в чате. Как начать?", next: "agree_start" },
+      { text: "Без звонка/встречи не доверяю", next: "refuse_after_agree", flag: "refusedLate" },
+      { text: "Это уже похоже на схему", next: "call_out", flag: "wasSuspicious" }
+    ]
+  },
+  look_only: {
+    messages: [
+      { from: "me", text: "Можно сначала просто посмотреть?" },
+      { from: "other", text: "Можно. Сфоткаешь место — 500 ₽. Потом решим про нормальный заказ." }
+    ],
+    tech: ["smallStep"],
+    options: [
+      { text: "Ок, давай так", next: "task_look" },
+      { text: "Нет, даже это не хочу", next: "refuse_after_agree", flag: "refusedLate" }
+    ]
+  },
+  give_data: {
+    messages: [
+      { from: "me", text: "Город и реквизиты скинул" },
+      { from: "other", text: "Принял. Подбираю точку…" },
+      { from: "system", text: "Несколько секунд…" }
+    ],
+    voice: { dur: "0:09", text: "Слушай внимательно. Подъезд три, лавочка справа. Чёрный пакет под сиденьем. Забрал — сразу напиши. Не открывай. Точка минут на двадцать." },
+    messagesAfterVoice: [
+      { from: "other", text: "Точка забора (активна ~20 мин):\nПодъезд 3, лавочка справа. Чёрный пакет под сиденьем.\nЗабери, напиши «забрал», сфоткай пустое место." }
+    ],
+    attach: [
+      { kind: "map", title: "Геолокация точки", sub: "Приблизительно" },
+      { kind: "place", title: "Фото ориентира", sub: "Лавочка у подъезда" }
+    ],
+    tech: ["urgency"],
+    options: [
+      { text: "Иду забирать", next: "on_the_way", flag: "reachedTask" },
+      { text: "Почему снова спешка?", next: "haste_on_task", flag: "askedHaste" },
+      { text: "Передумал, не пойду", next: "refuse_on_point", flag: "refusedLate" }
+    ]
+  },
+  task_look: {
+    messages: [
+      { from: "me", text: "Ок, просто посмотреть" },
+      { from: "other", text: "Точка: двор, лавочка у третьего подъезда. Сфоткай с двух ракурсов — и 500 ₽." }
+    ],
+    attach: [{ kind: "map", title: "Точка для фото", sub: "Только осмотр" }],
+    tech: ["smallStep"],
+    options: [
+      { text: "Иду фотографировать", next: "look_done", flag: "reachedTask" },
+      { text: "Стоп, это уже втягивание", next: "refuse_on_point", flag: "refusedLate" }
+    ]
+  },
+  haste_on_task: {
+    messages: [
+      { from: "me", text: "Почему снова спешка?" },
+      { from: "other", text: "Точка живая недолго. Есть ещё человек — тянешь, отдам ему." }
+    ],
+    tech: ["urgency", "fomo"],
+    options: [
+      { text: "Ок, иду", next: "on_the_way", flag: "reachedTask" },
+      { text: "Отменяй. Пас", next: "refuse_on_point", flag: "refusedLate" }
+    ]
+  },
+  on_the_way: {
+    messages: [
+      { from: "me", text: "Иду забирать" },
+      { from: "other", text: "Жду. Не тормози на месте." }
+    ],
+    options: [
+      { text: "Забрал. Пакет у меня", next: "got_package", flag: "tookPackage" },
+      { text: "Не нашёл пакет", next: "not_found" },
+      { text: "Тут люди — ухожу", next: "bail_spot", flag: "refusedLate" }
+    ]
+  },
+  not_found: {
+    messages: [
+      { from: "me", text: "Не нашёл пакет" },
+      { from: "other", text: "Ищи внимательнее — обычно не на виду. Если пусто — опередили, выход отменяем." }
+    ],
+    options: [
+      { text: "Нашёл, забрал", next: "got_package", flag: "tookPackage" },
+      { text: "Пусто. Ухожу", next: "refuse_on_point", flag: "refusedLate" }
+    ]
+  },
+  got_package: {
+    messages: [
+      { from: "me", text: "Забрал. Пакет у меня" },
+      { from: "other", text: "Ок. Фото пустого места — и дам сброс." }
+    ],
+    options: [
+      { text: "Фото отправил", next: "drop_point" },
+      { text: "Передумал, не продолжаю", next: "refuse_with_package", flag: "refusedLate" }
+    ]
+  },
+  drop_point: {
+    messages: [
+      { from: "me", text: "Фото отправил" }
+    ],
+    voice: { dur: "0:11", text: "Сброс — метров через четыреста. Серый трансформатор, щель за трубой. Положи плотно, отойди, два фото. Не торчи. Минут пятнадцать, потом сниму." },
+    messagesAfterVoice: [
+      { from: "other", text: "Сброс: ~400 м, серый трансформатор, щель за трубой.\nПоложи, отойди, фото с двух ракурсов. ~15 мин." }
+    ],
+    attach: [
+      { kind: "map", title: "Точка сброса", sub: "~5–10 мин" },
+      { kind: "drop", title: "Как оставить", sub: "Укромно" }
+    ],
+    tech: ["urgency"],
+    options: [
+      { text: "Оставил, фото скинул", next: "end_task_done", flag: "finishedTask" },
+      { text: "Не буду оставлять", next: "refuse_with_package", flag: "refusedLate" }
+    ]
+  },
+  look_done: {
+    messages: [
+      { from: "me", text: "Сфоткал, отправил" },
+      { from: "other", text: "Ок, 500 позже. Видишь — ничего сложного. Готов к заказу с пакетом?" }
+    ],
+    options: [
+      { text: "Да, давай настоящий", next: "give_data", flag: "gaveData" },
+      { text: "Нет, на этом хватит", next: "end_look_only" }
+    ]
+  },
+  refuse_early: {
+    messages: [
+      { from: "me", text: "Не интересно" },
+      { from: "other", text: "Ок. Если передумаешь — пиши." },
+      { from: "system", text: "Чем раньше стоп — тем меньше зацепок у схемы." }
+    ],
+    options: [
+      { text: "Блокирую", next: "end_block", flag: "refusedEarly" },
+      { text: "Просто не отвечать", next: "end_ignore", flag: "refusedEarly" }
+    ]
+  },
+  refuse_mid: {
+    messages: [
+      { from: "me", text: "Откажусь" },
+      { from: "other", text: "Я уже время потратил. Ладно, дело твоё." }
+    ],
+    tech: ["guilt"],
+    options: [
+      { text: "Блокирую", next: "end_block" },
+      { text: "Пока", next: "end_ignore" }
+    ]
+  },
+  refuse_after_agree: {
+    messages: [
+      { from: "me", text: "Передумал" },
+      { from: "other", text: "Зря расписывал. Ок, не навязываю." }
+    ],
+    tech: ["guilt"],
+    options: [
+      { text: "Блокирую", next: "end_block" },
+      { text: "До связи", next: "end_ignore" }
+    ]
+  },
+  refuse_on_point: {
+    messages: [
+      { from: "me", text: "Не пойду" },
+      { from: "other", text: "Точка выдана. Ладно. Такие заказы больше не дам." }
+    ],
+    options: [{ text: "Ок", next: "end_last_moment" }]
+  },
+  refuse_with_package: {
+    messages: [
+      { from: "me", text: "Не продолжаю" },
+      { from: "other", text: "Это уже не шутки. Делай что хочешь." },
+      { from: "system", text: "Собеседник отключился." }
+    ],
+    options: [{ text: "Завершить", next: "end_last_moment" }]
+  },
+  bail_spot: {
+    messages: [
+      { from: "me", text: "Тут люди — ухожу" },
+      { from: "other", text: "Если риск — не лезь. На сегодня отменяем." }
+    ],
+    options: [{ text: "Ушёл", next: "end_last_moment" }]
+  },
+  threaten: {
+    messages: [
+      { from: "me", text: "Сохраню переписку" },
+      { from: "other", text: "Делай что хочешь." },
+      { from: "system", text: "Собеседник отключился." }
+    ],
+    options: [{ text: "Завершить", next: "end_report" }]
+  },
+  end_block: { ending: "block" },
+  end_ignore: { ending: "ignore" },
+  end_report: { ending: "report" },
+  end_last_moment: { ending: "last_moment" },
+  end_look_only: { ending: "look_only" },
+  end_task_done: { ending: "task_done" }
+};
+
+const endings = {
+  block: {
+    title: "Ты заблокировал контакт",
+    sub: "Разговор оборван вовремя",
+    text: "Ты не стал выяснять «а вдруг правда подработка» и закрыл диалог. Для таких предложений это один из самых разумных ходов: не спорить, не проверять «на себе», просто оборвать контакт.",
+    meaning: "Ты не дал схеме время на раскачку. Чем короче такой разговор, тем меньше шанс, что сработают срочность, лесть или «тестовый заказ»."
+  },
+  ignore: {
+    title: "Ты перестал отвечать",
+    sub: "Молчание тоже выбор",
+    text: "Ты не продолжил переписку. Игнор не выглядит «героизмом», но часто лучше, чем вежливые уточнения, которые держат тебя в диалоге.",
+    meaning: "Вербовщику нужен ответ. Без него цепочка «вопрос → уговор → данные → точка» не строится."
+  },
+  report: {
+    title: "Ты заговорил о переписке и последствиях",
+    sub: "Собеседник слился",
+    text: "Намёк на сохранение переписки или обращение обычно резко меняет тон: таким людям не нужны лишние следы. В игре диалог оборвался — в жизни это сигнал не продолжать «игру».",
+    meaning: "Правильный импульс — зафиксировать переписку и при необходимости обратиться официально, а не дальше выяснять схему в чате."
+  },
+  last_moment: {
+    title: "Остановка на поздней стадии",
+    sub: "Почти втянулся — и вышел",
+    text: "Ты уже был близко: данные, точка или «почти согласие». Развернуться на этом этапе сложнее, чем в начале — так устроена психология маленьких шагов. Важно, что ты всё же остановился.",
+    meaning: "Схемы специально ведут от «просто почитай» к «просто фото» и дальше. Чем раньше стоп, тем проще."
+  },
+  look_only: {
+    title: "Только «осмотр» точки",
+    sub: "Маленький шаг, который не бывает случайным",
+    text: "Ты согласился на «безобидное» фото места. Именно с таких просьб часто начинают снижать порог: завтра попросят «заодно забрать пакет».",
+    meaning: "«Просто посмотреть» — не нейтральный квест, а проверка, готов ли ты выполнять указания незнакомца."
+  },
+  task_done: {
+    title: "Путь «курьера» пройден",
+    sub: "Симуляция завершена — мысль важнее «победы»",
+    text: "В игре ты прошёл цепочку: уговор → данные → точка → «забрал / оставил». В реальности на таком пути человек уже не «просто подрабатывает», а выполняет чужую схему с высоким риском.",
+    meaning: "Вербовщику удобна роль «курьера»: риск и последствия — на том, кто ходит с пакетом, а не на том, кто пишет из чата."
+  }
+};
+
+const tipsByEnding = {
+  block: [
+    "Блокировка и игнор — нормальная реакция, не «слабость».",
+    "Не возвращайся в диалог из любопытства и не продолжай с новых аккаунтов.",
+    "Предложение «лёгкой курьерки» от незнакомца в мессенджере почти никогда не бывает обычной доставкой."
+  ],
+  ignore: [
+    "Не отвечать — рабочий способ не втягиваться.",
+    "Если сообщения повторяются с других номеров — сохраняй переписку.",
+    "Не нужно доказывать собеседнику, что ты «всё понял»."
+  ],
+  report: [
+    "Сохранять переписку при подозрениях — правильно.",
+    "Сообщать лучше через официальные каналы, а не угрожать в чате «для эффекта».",
+    "После такого лучше не продолжать общение с этим контактом."
+  ],
+  last_moment: [
+    "Чем дальше диалог, тем труднее сказать «нет» — это нормальная ловушка вовлечения.",
+    "«Тест», «просто фото», «один раз» — типичные ступени.",
+    "Если уже светил номер или карту — имеет смысл внимательнее следить за счетами и сообщениями."
+  ],
+  look_only: [
+    "С «просто сфоткай» часто начинают, чтобы не пугать сразу «пакетом».",
+    "Оборвать цепочку на первом шаге проще, чем на пятом.",
+    "Любая просьба выполнить действие в городе по инструкции незнакомца — уже красный флаг."
+  ],
+  task_done: [
+    "Фраза «я просто перенёс пакет» в реальности часто не делает роль безопасной.",
+    "Срочность, секретность и запрет открывать — не «особенности сервиса», а типичные признаки схемы.",
+    "Если похожая ситуация у знакомых — важна ранняя помощь и разговор со взрослыми / специалистами, которым доверяешь."
+  ]
+};
+
+// Смысл про ответственность — спокойно, без «страшилки ради страшилки»
+const LEGAL_BLOCK = {
+  title: "По смыслу закона",
+  lines: [
+    "В реальной жизни операции с наркотическими средствами — это не «серая подработка», а зона тяжёлой уголовной ответственности.",
+    "Роль человека, который по чужой указке забирает, хранит или передаёт запрещённое, часто оценивают не как «просто курьерку», а как участие в обороте.",
+    "Слова «я не знал, что внутри» и «мне так написали в чате» сами по себе обычно не превращают ситуацию в безопасную.",
+    "Эта игра не про то, «как обойти закон», а про то, чтобы узнать схему до того, как она станет твоей историей."
+  ]
+};
+
+const RED_FLAGS_CHECK = [
+  "Обещают лёгкие деньги за простые действия «без опыта»",
+  "Просят не открывать посылку и не задавать лишних вопросов",
+  "Давят срочностью: «точка сгорит», «есть ещё человек»",
+  "Уход от прямого ответа, что за товар и почему всё секретно",
+  "Просят телефон, карту или «просто сходить / сфоткать»",
+  "Общение только в мессенджере, без нормального оформления работы"
+];
+
+const CLOSING_LINE = "Лёгкий заработок от незнакомца в мессенджере — почти никогда не про «просто курьерку». Если что-то похожее пишет тебе или другу — остановись и поговори с тем, кому доверяешь.";
+
+const PERSONAS = [
+  {
+    name: "Алекс", title: "Алекс | Подработка", letter: "А",
+    style: "soft",
+    label: "мягкий «свой парень»"
+  },
+  {
+    name: "Макс", title: "Макс | Логистика", letter: "М",
+    style: "hard",
+    label: "жёсткий, без лишних слов"
+  },
+  {
+    name: "Кирилл", title: "Кирилл | Доставка", letter: "К",
+    style: "newbie",
+    label: "«коллега-новичок»"
+  },
+  {
+    name: "Игорь", title: "Игорь | Куратор", letter: "И",
+    style: "soft",
+    wave: true,
+    label: "вторая волна"
+  }
+];
+
+const ENTRIES = {
+  search: {
+    id: "search",
+    prologue: "Ты ищешь подработку в чате. Пишет незнакомец — «простая курьерка», хорошие деньги.",
+    messages: {
+      soft: [
+        "Привет! Видел, что ищешь подработку.",
+        "Есть вариант для нормальных ребят: курьер, небольшие посылки, пару часов.",
+        "За выход 3000–7000 ₽. Без опыта, всё объясню. Если интересно — напиши."
+      ],
+      hard: [
+        "Привет. Нужен курьер на точки.",
+        "Забрал — отнёс — фото. 3–7к за выход. Без воды.",
+        "Если готов работать — пиши. Если нет — не трать время."
+      ],
+      newbie: [
+        "Привет) Ты тоже подработку ищешь?",
+        "Меня недавно взяли курьером, скинули ещё набор. Типа забрать посылку и отнести.",
+        "Норм платят, 3–7к. Если интересно — могу передать как связаться / объяснить."
+      ]
+    }
+  },
+  ad: {
+    id: "ad",
+    prologue: "Ты откликнулся на объявление о подработке. Отвечает «логист».",
+    messages: {
+      soft: [
+        "Привет, это по объявлению.",
+        "Курьерка: забирать и оставлять небольшие заказы по точкам. Гибко по времени.",
+        "Оплата 3000–7000 за выход, на карту. Рассказать подробнее?"
+      ],
+      hard: [
+        "По объявлению, да.",
+        "Курьер. Точки, пакет, фото. 3–7к. Без собеседований.",
+        "Готов — пиши «го», разберёмся. Нет — ладно."
+      ],
+      newbie: [
+        "О, ты тоже с объявления?",
+        "Мне вчера объяснили схему, вроде просто. Курьер между точками.",
+        "Если ещё актуально — могу вкратце написать как у них устроено."
+      ]
+    }
+  },
+  story: {
+    id: "story",
+    prologue: "После твоего сторис/поста о поиске работы написал незнакомец.",
+    messages: {
+      soft: [
+        "Привет, увидел что ищешь работу.",
+        "Не реклама в лоб: есть тихая курьерка, без начальника над душой.",
+        "Несколько часов, нормальные деньги. Могу коротко объяснить."
+      ],
+      hard: [
+        "По твоему сторис. Нужны руки на курьерку.",
+        "Пакет с точки на точку. Деньги сразу. Без лирики.",
+        "Интересно — пиши. Нет — ок."
+      ],
+      newbie: [
+        "Привет) Увидел сторис про работу.",
+        "Сам недавно так подрабатываю, скинули что ещё люди нужны.",
+        "Могу рассказать как устроено, без давления."
+      ]
+    }
+  }
+};
+
+let currentPersona = PERSONAS[0];
+let currentEntry = "search";
+
+
+const QUIZ = [
+  {
+    q: "Что из этого сильнее всего похоже на красный флаг?",
+    options: [
+      { t: "Официальный договор и понятный график", ok: false },
+      { t: "«Не открывай пакет» + срочность + деньги в чате", ok: true },
+      { t: "Собеседование в офисе с документами", ok: false }
+    ]
+  },
+  {
+    q: "Почему просьба «просто сфоткай точку» опасна?",
+    options: [
+      { t: "Это всегда незаконно само по себе", ok: false },
+      { t: "Это маленький шаг: проверяют, выполнишь ли ты указание незнакомца", ok: true },
+      { t: "Фото в городе всегда запрещены", ok: false }
+    ]
+  },
+  {
+    q: "Что разумнее всего сделать с подозрительным предложением «курьерки»?",
+    options: [
+      { t: "Проверить «на одном заказе», вдруг правда", ok: false },
+      { t: "Спорить и выяснять схему до конца", ok: false },
+      { t: "Не продолжать, при необходимости сохранить переписку и обратиться к тем, кому доверяешь", ok: true }
+    ]
+  },
+  {
+    q: "Верно ли: «Я просто перенёс пакет — ответственности быть не может»?",
+    options: [
+      { t: "Да, курьер всегда ни при чём", ok: false },
+      { t: "Нет: участие в чужой схеме с запрещённым может иметь серьёзные последствия", ok: true },
+      { t: "Да, если не открывал пакет", ok: false }
+    ]
+  }
+];
+
+function applyPersona() {
+  let plays = 0;
+  try { plays = parseInt(localStorage.getItem("proph_plays") || "0", 10) || 0; } catch(e) {}
+  const persona = PERSONAS[plays % PERSONAS.length];
+  currentPersona = persona;
+  const titleEl = document.getElementById("contactTitle");
+  const av = document.getElementById("avatarLetter");
+  if (titleEl) titleEl.textContent = persona.title;
+  if (av) {
+    const dot = av.querySelector(".dot");
+    av.textContent = persona.letter;
+    if (dot) av.appendChild(dot);
+    else {
+      const d = document.createElement("div");
+      d.className = "dot";
+      av.appendChild(d);
+    }
+  }
+  return persona;
+}
+
+function buildStartNode() {
+  const entry = ENTRIES[currentEntry] || ENTRIES.search;
+  const style = (currentPersona && currentPersona.style) || "soft";
+  let lines = (entry.messages[style] || entry.messages.soft || []).slice();
+  if (currentPersona && currentPersona.wave) {
+    lines = [
+      "Привет. Пишу вместо предыдущего куратора — тот клиентов кинул.",
+      "Если ещё нужна подработка: курьерка, точки, 3–7к за выход.",
+      "Формат тот же. Если актуально — напиши."
+    ];
+  }
+  return {
+    messages: lines.map(t => ({ from: "other", text: t })),
+    options: (story._baseStartOptions || story.start.options).slice()
+  };
+}
+
+function copyFlagsChecklist() {
+  const textToCopy = [
+    "Красные флаги (профилактика):",
+    ...RED_FLAGS_CHECK.map((c, i) => (i + 1) + ". " + c),
+    "",
+    CLOSING_LINE
+  ].join("\n");
+  const btn = document.getElementById("copyFlagsBtn");
+  const done = () => {
+    if (btn) {
+      btn.textContent = "Скопировано";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "Скопировать красные флаги";
+        btn.classList.remove("copied");
+      }, 2000);
+    }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(done).catch(() => {
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = textToCopy;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch(e) {}
+      document.body.removeChild(ta);
+      done();
+    });
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = textToCopy;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch(e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+}
+
+function renderQuiz(container) {
+  let score = 0;
+  let answered = 0;
+  const total = QUIZ.length;
+  container.innerHTML = `<h3>Проверь себя</h3><p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">4 коротких вопроса — закрепить мысль.</p>`;
+  QUIZ.forEach((item, qi) => {
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<div class="quiz-q">${qi + 1}. ${item.q}</div>`;
+    item.options.forEach((opt, oi) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "quiz-opt";
+      b.textContent = opt.t;
+      b.onclick = () => {
+        if (b.disabled) return;
+        // lock this question
+        wrap.querySelectorAll("button").forEach(x => { x.disabled = true; });
+        if (opt.ok) {
+          b.classList.add("correct");
+          score++;
+        } else {
+          b.classList.add("wrong");
+          wrap.querySelectorAll("button").forEach((x, idx) => {
+            if (item.options[idx] && item.options[idx].ok) x.classList.add("correct");
+          });
+        }
+        answered++;
+        if (answered === total) {
+          const res = document.createElement("div");
+          res.className = "quiz-result";
+          let msg = "";
+          if (score === total) msg = "Отличный результат. Ты уже замечаешь типичные крючки схемы.";
+          else if (score >= 3) msg = "Хорошо. Имеет смысл ещё раз глянуть чеклист красных флагов выше.";
+          else msg = "Это нормально — для этого и нужна профилактика. Перечитай флаги и пройди игру другим путём.";
+          res.innerHTML = `<strong>Результат: ${score} из ${total}</strong><br>${msg}`;
+          container.appendChild(res);
+        }
+      };
+      wrap.appendChild(b);
+    });
+    container.appendChild(wrap);
+  });
+}
+
+const TECH_LABELS = {
+  urgency: "Срочность («точка сгорит», таймер, «быстрее»)",
+  secrecy: "Секретность («не открывай», анонимность)",
+  fomo: "FOMO («есть ещё человек на точку»)",
+  guilt: "Вина («я время потратил»)",
+  praise: "Похвала после согласия",
+  gaslight: "Снижение тревоги («ты накручиваешь»)",
+  smallStep: "Маленький шаг («тест», «просто фото»)",
+  dataPush: "Давление отдать данные / реквизиты"
+};
+
+function saveEnding(key) {
+  let unlocked = [];
+  try { unlocked = JSON.parse(localStorage.getItem("proph_endings") || "[]"); } catch(e) {}
+  if (!unlocked.includes(key)) {
+    unlocked.push(key);
+    localStorage.setItem("proph_endings", JSON.stringify(unlocked));
+  }
+  return unlocked;
+}
+
+function collectFlags() {
+  const list = [];
+  if (flags.askedProduct) list.push("Уточнял товар");
+  if (flags.askedMoney) list.push("Спрашивал про деньги");
+  if (flags.askedLegal) list.push("Спрашивал про законность");
+  if (flags.askedHow) list.push("Уточнял схему");
+  if (flags.askedHaste) list.push("Спрашивал про спешку");
+  if (flags.askedOpen) list.push("Спрашивал, почему нельзя открыть");
+  if (flags.wasSuspicious) list.push("Выражал подозрения");
+  if (flags.gaveData) list.push("Передал данные");
+  if (flags.reachedTask) list.push("Дошёл до «точки»");
+  if (flags.tookPackage) list.push("«Забрал» пакет");
+  if (flags.finishedTask) list.push("Подтвердил сброс");
+  if (flags.threatenedReport) list.push("Говорил о переписке / сообщении");
+  if (flags.sawNotif) list.push("Пришло «сообщение извне»");
+  if (flags.heardVoice) list.push("Получил голосовое");
+  if (flags.triedNoCard) list.push("Просил «без карты, только фото»");
+  if (flags.citedFriend) list.push("Ссылался на друга");
+  if (flags.askedMeet) list.push("Просил звонок или встречу");
+  return list;
+}
+
+function collectTech() {
+  return Object.keys(techniques).filter(k => techniques[k]).map(k => TECH_LABELS[k]);
+}
+
+function buildMirror() {
+  if (stepChain.length) return stepChain.slice();
+  const order = [
+    "_interest", "askedHow", "askedProduct", "askedMoney", "askedLegal",
+    "askedOpen", "askedHaste", "wasSuspicious", "citedFriend", "askedMeet",
+    "triedNoCard", "gaveData", "reachedTask", "tookPackage", "finishedTask",
+    "threatenedReport", "refusedEarly", "refusedLate"
+  ];
+  const out = [];
+  order.forEach(k => {
+    if (flags[k] && STEP_LABELS[k]) out.push(STEP_LABELS[k]);
+    // _interest only from stepChain
+  });
+  return out;
+}
+
+function buildTakeawayText(key) {
+  const lines = [
+    "Памятка: как распознать «лёгкую курьерку» в мессенджере",
+    "",
+    "Красные флаги:",
+    ...RED_FLAGS_CHECK.slice(0, 5).map((c, i) => (i + 1) + ". " + c),
+    "",
+    CLOSING_LINE,
+    "",
+    "Это учебный материал, не юридическая консультация."
+  ];
+  return lines.join("\n");
+}
+
+function copyTakeaway(key) {
+  const textToCopy = buildTakeawayText(key);
+  const btn = document.getElementById("copyTakeawayBtn");
+  const done = () => {
+    if (btn) {
+      btn.textContent = "Карточка скопирована";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "Скопировать карточку «на вынос»";
+        btn.classList.remove("copied");
+      }, 2000);
+    }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(done).catch(() => fallbackCopy(textToCopy, done));
+  } else {
+    fallbackCopy(textToCopy, done);
+  }
+}
+
+function fallbackCopy(textToCopy, done) {
+  const ta = document.createElement("textarea");
+  ta.value = textToCopy;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+  done();
+}
+
+function showEnding(key) {
+  stopTimer();
+  showTyping(false);
+  playing = false;
+
+  const e = endings[key] || endings.ignore || {
+    title: "Диалог завершён",
+    sub: "Профилактическая игра",
+    text: "Переписка окончена.",
+    meaning: ""
+  };
+  let unlocked = [];
+  try { unlocked = saveEnding(key); } catch (err) { unlocked = []; }
+
+  const fl = collectFlags();
+  const tech = collectTech();
+  const mirror = buildMirror();
+  const tips = (tipsByEnding[key] || tipsByEnding.ignore || [
+    "Будь осторожен с предложениями лёгкого заработка в сети."
+  ]);
+
+  let tease = TEASES[key] || "";
+  const missing = ENDING_KEYS.filter(k => unlocked.indexOf(k) === -1);
+  if (missing.length) {
+    const m = missing[Math.floor(Math.random() * missing.length)];
+    tease = TEASES[m] || tease;
+  }
+
+  headerEl.classList.add("hidden");
+  chatEl.classList.add("hidden");
+  optionsEl.classList.add("hidden");
+  typingEl.style.display = "none";
+
+  const toast = document.getElementById("toastNotif");
+  if (toast) {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+  }
+
+  const meaningHtml = e.meaning
+    ? `<div class="card meaning"><h3>Что это значит</h3><p style="margin:0">${e.meaning}</p></div>`
+    : "";
+
+  let mirrorExtra = "";
+  if (mirror.length && mirror.length <= 2) {
+    mirrorExtra = `<p style="font-size:13px;color:var(--text-muted);margin:8px 0 0">Короткая цепочка — схеме почти не за что зацепиться.</p>`;
+  } else if (mirror.length >= 5) {
+    mirrorExtra = `<p style="font-size:13px;color:var(--text-muted);margin:8px 0 0">Длинная цепочка — видно, как мелкие «да» складываются в путь.</p>`;
+  }
+  const mirrorHtml = mirror.length
+    ? `<div class="card mirror"><h3>Зеркало: что схема от тебя получила</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 8px">Цепочка именно этого прохождения — не общий список:</p>
+        ${mirror.map((s, i) => `<div class="flag-item">${i + 1}. ${s}</div>`).join("")}
+        ${mirrorExtra}
+      </div>`
+    : `<div class="card mirror"><h3>Зеркало</h3><p style="margin:0">Ты почти не дал схеме зацепок — диалог оборвался рано. Так и нужно.</p></div>`;
+
+  const legalHtml = `<div class="card legal"><h3>${LEGAL_BLOCK.title}</h3>${LEGAL_BLOCK.lines.map(l => `<p style="margin:0 0 8px">${l}</p>`).join("")}</div>`;
+  const takeawayHtml = `<div class="card takeaway">
+      <h3>Карточка «на вынос»</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 8px">Без спойлера сюжета — можно сохранить или переслать.</p>
+      ${RED_FLAGS_CHECK.slice(0, 5).map((c, i) => `<div class="check-item">${i + 1}. ${c}</div>`).join("")}
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.45"><strong>Главное:</strong> ${CLOSING_LINE}</p>
+    </div>`;
+  const techHtml = tech.length
+    ? `<div class="card techniques"><h3>Приёмы вербовщика в этом диалоге</h3>${tech.map(t => `<div class="tech-item">• ${t}</div>`).join("")}</div>`
+    : "";
+  const tipsHtml = `<div class="card"><h3>На заметку</h3><ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul></div>`;
+  const teaseHtml = missing.length
+    ? (tease || "Попробуй другой путь.")
+    : "Ты видел все основные финалы. Можно пройти снова другим характером.";
+
+  endingEl.style.display = "flex";
+  endingEl.scrollTop = 0;
+  endingEl.innerHTML =
+    `<h2>${e.title}</h2>` +
+    `<div class="subtitle">${e.sub || ""}</div>` +
+    `<p>${e.text || ""}</p>` +
+    meaningHtml +
+    mirrorHtml +
+    techHtml +
+    legalHtml +
+    takeawayHtml +
+    `<button type="button" class="secondary-btn" id="copyTakeawayBtn">Скопировать карточку «на вынос»</button>` +
+    tipsHtml +
+    `<div class="card quiz-card" id="quizRoot"></div>` +
+    `<div class="replay-box">` +
+      `<div class="count">Открыто концовок: ${unlocked.length} из ${ENDING_KEYS.length}</div>` +
+      `<div class="tease">${teaseHtml}</div>` +
+    `</div>` +
+    `<p style="font-size:13px;color:var(--text-muted);text-align:center;margin-top:8px;">Учебная профилактическая игра. Не является юридической консультацией.</p>` +
+    `<div class="btn-row"><button type="button" class="restart-btn" id="restartBtn">Начать заново</button></div>`;
+
+  try {
+    const takeBtn = document.getElementById("copyTakeawayBtn");
+    if (takeBtn) takeBtn.onclick = () => copyTakeaway(key);
+  } catch (err) { /* silent */ }
+  try {
+    const quizRoot = document.getElementById("quizRoot");
+    if (quizRoot) renderQuiz(quizRoot);
+  } catch (err) { /* silent */ }
+  try {
+    const restartBtn = document.getElementById("restartBtn");
+    if (restartBtn) restartBtn.onclick = () => location.reload();
+  } catch (err) { /* silent */ }
+}
+
+
+let playing = false;
+
+function pushStep(flag) {
+  if (!flag) return;
+  const label = STEP_LABELS[flag];
+  if (!label) return;
+  if (stepChain.indexOf(label) !== -1) return;
+  stepChain.push(label);
+}
+
+function chooseOption(opt) {
+  if (playing) return;
+  playing = true;
+  optionsEl.innerHTML = "";
+  if (opt.flag && Object.prototype.hasOwnProperty.call(flags, opt.flag)) {
+    flags[opt.flag] = true;
+    pushStep(opt.flag);
+  }
+  if (opt.next === "agree_start") pushStep("_interest");
+  if (opt.next === "give_data") pushStep("gaveData");
+  if (opt.next === "on_the_way" || opt.next === "task_look") pushStep("reachedTask");
+  if (opt.next === "got_package") pushStep("tookPackage");
+  if (opt.next === "end_task_done") pushStep("finishedTask");
+  if (opt.next === "end_block" || opt.next === "end_ignore") {
+    if (!flags.refusedLate && !flags.refusedEarly) pushStep("refusedEarly");
+  }
+
+  setTimeout(() => {
+    playNode(opt.next).catch(err => {
+      /* silent */
+      try { showEnding("ignore"); } catch (e) { location.reload(); }
+    }).finally(() => { playing = false; });
+  }, 40);
+}
+
+async function playNode(id) {
+  const node = story[id];
+  if (!node) {
+    /* unknown node */
+    showEnding("ignore");
+    return;
+  }
+
+  // Ending node — leave chat cleanly
+  if (node.ending) {
+    showTyping(false);
+    stopTimer();
+    await new Promise(r => setTimeout(r, 400));
+    showEnding(node.ending);
+    return;
+  }
+
+  if (node.stopTimer) stopTimer();
+
+  if (node.tech) {
+    node.tech.forEach(t => { if (Object.prototype.hasOwnProperty.call(techniques, t)) techniques[t] = true; });
+  }
+
+  // Style-specific lines if provided
+  let msgList = node.messages || [];
+  const st = (currentPersona && currentPersona.style) || "soft";
+  if (node.byStyle && node.byStyle[st]) {
+    msgList = node.byStyle[st];
+  }
+
+  // Messages — slower pace
+  for (const m of msgList) {
+    if (m.from === "other") {
+      setStatus("печатает...");
+      showTyping(true);
+      const delay = 700 + Math.random() * 700 + Math.min(900, (m.text || "").length * 10);
+      await new Promise(r => setTimeout(r, delay));
+      showTyping(false);
+      setStatus("в сети");
+    } else if (m.from === "system") {
+      await new Promise(r => setTimeout(r, 400));
+    } else {
+      await new Promise(r => setTimeout(r, 280));
+    }
+    addMsg(m.from, m.text);
+  }
+
+  if (node.voice) {
+    setStatus("голосовое...");
+    await new Promise(r => setTimeout(r, 700));
+    addVoice(node.voice.dur, node.voice.text);
+    setStatus("в сети");
+    await new Promise(r => setTimeout(r, 400));
+  }
+
+  if (node.messagesAfterVoice) {
+    for (const m of node.messagesAfterVoice) {
+      setStatus("печатает...");
+      showTyping(true);
+      const delay = 650 + Math.random() * 550 + Math.min(800, (m.text || "").length * 9);
+      await new Promise(r => setTimeout(r, delay));
+      showTyping(false);
+      setStatus("в сети");
+      addMsg(m.from, m.text);
+    }
+  }
+
+  if (node.attach) {
+    for (const a of node.attach) {
+      await new Promise(r => setTimeout(r, 550));
+      addAttach(a.kind, a.title, a.sub);
+    }
+  }
+
+  if (node.startTimer) startTimer(node.startTimer);
+
+  // external push notification (top toast), once per run
+  if (!notifShown && (node.notif || id === "on_the_way" || id === "agree_start" || id === "give_data")) {
+    notifShown = true;
+    await new Promise(r => setTimeout(r, 800));
+    if (node.notif) {
+      addNotif(node.notif.name, node.notif.body);
+    } else {
+      const alts = [
+        { name: "Мама", body: "Ты где? Когда будешь дома?" },
+        { name: "Друг", body: "Ну что, нашёл подработку?" },
+        { name: "Сестра", body: "Напиши, как будешь свободен" }
+      ];
+      const a = alts[Math.floor(Math.random() * alts.length)];
+      addNotif(a.name, a.body);
+    }
+  }
+
+  if (node.options && node.options.length) {
+    await new Promise(r => setTimeout(r, 280));
+    node.options.forEach(o => {
+      const btn = document.createElement("button");
+      btn.className = "opt-btn";
+      btn.textContent = o.text;
+      btn.onclick = () => chooseOption(o);
+      optionsEl.appendChild(btn);
+    });
+  } else {
+    // no options and not an ending — finish safely
+    await new Promise(r => setTimeout(r, 300));
+    showEnding("ignore");
+  }
+}
+
+// Safer showEnding wrapper used by error paths — never restarts chat mid-run
+function safeEnding(key) {
+  try {
+    showEnding(key || "ignore");
+  } catch (e) {
+    /* silent */
+    location.reload();
+  }
+}
+
+// preserve default options for rebuilt start
+story._baseStartOptions = (story.start && story.start.options) ? story.start.options.slice() : [];
+
+const ENTRY_IDS = Object.keys(ENTRIES);
+
+function beginGame() {
+  // random entry each launch
+  currentEntry = ENTRY_IDS[Math.floor(Math.random() * ENTRY_IDS.length)] || "search";
+
+  // reset run state
+  stepChain.length = 0;
+  notifShown = false;
+  Object.keys(flags).forEach(k => { flags[k] = false; });
+  Object.keys(techniques).forEach(k => { techniques[k] = false; });
+
+  prologue.classList.add("hidden");
+  endingEl.style.display = "none";
+  endingEl.innerHTML = "";
+  headerEl.classList.remove("hidden");
+  chatEl.classList.remove("hidden");
+  optionsEl.classList.remove("hidden");
+  chatEl.innerHTML = "";
+  optionsEl.innerHTML = "";
+  playing = false;
+
+  let plays = 0;
+  try { plays = parseInt(localStorage.getItem("proph_plays") || "0", 10) || 0; } catch(e) {}
+  applyPersona();
+  try { localStorage.setItem("proph_plays", String(plays + 1)); } catch(e) {}
+
+  const built = buildStartNode();
+  story.start = {
+    messages: built.messages,
+    options: built.options
+  };
+
+  playNode("start").catch(err => {
+    /* silent */
+    showEnding("ignore");
+  });
+}
+
+function updateLockScreen() {
+  const now = new Date();
+  const hh = now.getHours().toString().padStart(2, "0");
+  const mm = now.getMinutes().toString().padStart(2, "0");
+  const tEl = document.getElementById("lockTime");
+  const dEl = document.getElementById("lockDate");
+  if (tEl) tEl.textContent = hh + ":" + mm;
+  if (dEl) {
+    try {
+      dEl.textContent = now.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+    } catch (e) {
+      dEl.textContent = "";
+    }
+  }
+  // preview persona for next run
+  let plays = 0;
+  try { plays = parseInt(localStorage.getItem("proph_plays") || "0", 10) || 0; } catch (e) {}
+  const p = PERSONAS[plays % PERSONAS.length];
+  const title = document.getElementById("lockTitle");
+  const av = document.getElementById("lockAv");
+  const prev = document.getElementById("lockPreview");
+  if (title) title.textContent = p.title;
+  if (av) av.textContent = p.letter;
+  if (prev) {
+    const previews = {
+      soft: "Привет! Есть вариант подработки — курьер, хорошие деньги…",
+      hard: "Нужен курьер на точки. 3–7к за выход. Если готов — пиши.",
+      newbie: "Привет) Ты тоже подработку ищешь? Могу рассказать как устроено…"
+    };
+    prev.textContent = previews[p.style] || previews.soft;
+  }
+}
+updateLockScreen();
+setInterval(updateLockScreen, 30000);
+
+const startBtn = document.getElementById("startBtn");
+if (startBtn) startBtn.onclick = () => beginGame();
+</script>
+</body>
+</html>
